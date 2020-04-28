@@ -1,0 +1,5 @@
+[webserver]
+1.2.3.4     #enter your server name
+
+[dbserver]
+1.2.3.4     #enter your server name
