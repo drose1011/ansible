@@ -1,0 +1,42 @@
+---
+- name: Install Docker
+  hosts: all
+  become: true
+  tasks:
+   - name: Apt-get update
+     apt:
+      update_cache: yes
+      force_apt_get: yes
+   
+   - name: Install required packages
+     apt:
+      name: ['apt-transport-https', 'ca-certificates', 'curl', 'gnupg-agent', 'software-properties-common']
+      update_cache: yes
+      state: latest
+
+   - name: Add Docker's official GPG key
+     apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+   - name: Add repository
+     apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu bionic stable 
+      state: present
+
+   - name: Apt-get update
+     apt:
+      update_cache: yes
+      force_apt_get: yes
+   
+   - name: Install Docker-CE
+     apt:
+      name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+      state: latest
+
+   - name: Add user to docker group
+     user:
+      name: matish
+      shell: /bin/bash
+      group: docker
+      
