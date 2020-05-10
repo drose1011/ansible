@@ -1,0 +1,81 @@
+---
+ - gather_facts: yes
+   hosts: aws
+   become: true
+   tasks:
+    - name: Download package for Ubuntu 16
+      get_url:
+       url: https://repo.zabbix.com/zabbix/4.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_4.4-1+xenial_all.deb
+       dest: .
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '16'
+    - name: Download package for Ubuntu 18
+      get_url:
+       url: https://repo.zabbix.com/zabbix/4.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_4.4-1+bionic_all.deb
+       dest: .
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18'
+    - name: Add repository for Centos 7
+      action: shell rpm -Uvh https://repo.zabbix.com/zabbix/4.4/rhel/7/x86_64/zabbix-release-4.4-1.el7.noarch.rpm
+      when: ansible_distribution == 'CentOS'
+    - name: Install debian file for ubuntu 16
+      apt:
+       deb: ./zabbix-release_4.4-1+xenial_all.deb
+       state: present
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '16'
+    - name: Install debian file for ubuntu 18
+      apt:
+        deb: ./zabbix-release_4.4-1+bionic_all.deb
+        state: present
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '18'
+    - name: Update apt-get and cache
+      apt: update_cache=yes force_apt_get=yes
+      when: ansible_distribution == 'Ubuntu'
+    - name: Install zabbix-agent in Ubuntu
+      apt: name=zabbix-agent update_cache=yes state=latest
+      when : ansible_distribution == 'Ubuntu'
+    - name: Install zabbix in Centos
+      yum:
+        name: zabbix-agent
+        update_cache: yes
+        state: present
+      when: ansible_distribution == 'CentOS'
+    - name: Start and enable zabbix services
+      service:
+        name: zabbix-agent
+        state: started
+        enabled: yes
+    - name: Open Firewall port 10050 in Centos
+      firewalld:
+        port: 10050/tcp
+        permanent: yes
+        state: enabled
+      when: ansible_distribution == 'CentOS'
+    - name: Open Firewall port 10051 in Centos
+      firewalld:
+        port: 10051/tcp
+        permanent: yes
+        state: enabled
+      when: ansible_distribution == 'CentOS'
+    - name: Change Server config file
+      lineinfile:
+       path: /etc/zabbix/zabbix_agentd.conf
+       regexp: '^Server=127.0.0.1'
+       line: Server={{ server }}
+    - name: Change ServerActive in config file
+      lineinfile:
+       path: /etc/zabbix/zabbix_agentd.conf
+       regexp: '^ServerActive=127.0.0.1'
+       line: ServerActive={{ serveractive }}
+    - name: Change Hostname in config file
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Hostname='
+        line: Hostname= {{ ansible_facts['hostname'] }}
+    - name: Change the active checks
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^# RefreshActiveChecks=120'
+        line: RefreshActiveChecks=120
+    - name: Restart the zabbix-agent service
+      service:
+       name: zabbix-agent
+       state: restarted

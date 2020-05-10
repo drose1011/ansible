@@ -1,0 +1,30 @@
+---
+- name: Download and install zabbix-agent & enable the service
+  hosts: windows
+  tasks:
+   - name: Install chocolatey on Windows machine
+     win_chocolatey:
+      name: chocolatey
+   - name: Install zabbix-agent
+     win_shell: choco install zabbix-agent.install -y -params '"/SERVER:{{ server }} /SERVERACTIVE:{{ serveractive }} /ENABLEREMOTECOMMANDS:1 /ENABLEPATH:1"'
+   - name: Firewall rule to allow
+     win_firewall_rule:
+      name: zabbix-agent
+      localport: "{{ agent_port }}"
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: yes
+   - name: Firewall rule to allow
+     win_firewall_rule:
+      name: zabbix-agent
+      localport: "{{ agent_port_active }}"
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: yes
+
+
+

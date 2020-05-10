@@ -1,0 +1,8 @@
+---
+ansible_user: username       
+ansible_password: password
+ansible_port: 5986
+ansible_connection: winrm
+ansible_winrm_server_cert_validation: ignore
+agent_port: 10050
+agent_port_active: 10051
